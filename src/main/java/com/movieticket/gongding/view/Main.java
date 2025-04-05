@@ -1,4 +1,4 @@
-package com.movieticket.gongding;
+package com.movieticket.gongding.view;
 
 public class Main {
     public static void main(String[] args) {
