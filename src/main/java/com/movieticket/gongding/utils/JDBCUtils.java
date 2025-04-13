@@ -4,7 +4,7 @@ import java.sql.*;
 
 public class JDBCUtils {
     //finial声明保证安全性
-    private static final String URL = "jdbc:mysql://localhost:3306/movie_ticket_db?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8";
+    private static final String URL = "jdbc:mysql://localhost:3306/movie_ticket_system_db?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8";
     private static final String USER = "root";
     private static final String PASSWORD = "T.GKiPl({xfLt0M6w6Pj+FL[(E]Pzu&s-3ScHI]Xb1WleLX_D";
 
