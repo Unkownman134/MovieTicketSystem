@@ -4,6 +4,8 @@ import com.movieticket.gongding.dao.UserDao;
 import com.movieticket.gongding.entity.User;
 import com.movieticket.gongding.utils.PasswordUtils;
 
+import java.util.List;
+
 public class UserService {
     private final UserDao userDao = new UserDao();
 

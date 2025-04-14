@@ -7,6 +7,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserDao {
     public boolean addUser(User user) {
@@ -55,12 +57,43 @@ public class UserDao {
 
     public boolean updateLoginTime(int userId) {
         String sql = "UPDATE users SET last_login = NOW() WHERE id = ?";
-        try (Connection conn = JDBCUtils.getConnection();PreparedStatement pstmt =conn.prepareStatement(sql)) {
+        try (Connection conn = JDBCUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, userId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public List<User> getAllUsers() throws SQLException {
+        String sql = "SELECT * FROM users";
+        try (Connection conn = JDBCUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                List<User> users = new ArrayList<>();
+
+                while (rs.next()) {
+                    User user = new User();
+
+                    user.setId(rs.getInt("id"));
+                    user.setUsername(rs.getString("username"));
+                    user.setStatus(rs.getString("status"));
+                    user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                    users.add(user);
+                }
+                return users;
+            }
+        }
+    }
+
+    public boolean updateUserStatus(int userId) throws SQLException {
+        try (Connection conn = JDBCUtils.getConnection()) {
+            String sql = "UPDATE users SET status = ? WHERE id = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, "BLACKLIST");
+                pstmt.setInt(2, userId);
+                return pstmt.executeUpdate() > 0;
+            }
         }
     }
 }
