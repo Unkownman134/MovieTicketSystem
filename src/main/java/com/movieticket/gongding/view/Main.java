@@ -1,13 +1,17 @@
 package com.movieticket.gongding.view;
 
+import com.movieticket.gongding.controller.UserController;
 import com.movieticket.gongding.dao.UserDao;
 import com.movieticket.gongding.service.UserService;
 
+import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Main {
     private final Scanner scanner = new Scanner(System.in);
     private final UserService userService = new UserService();
+    private final UserController userController = new UserController();
+private final UserDao userDao = new UserDao();
 
     public void start() {
         while (true) {
@@ -44,7 +48,12 @@ public class Main {
         int result = userService.login(username, password);
         switch (result) {
             case 1:
-                //TODO：用户登录界面
+                try {
+                    //用户界面
+                    userController.showUserMenu(userDao.findUserByUsername(username));
+                } catch (SQLException e) {
+                    System.out.println("登录失败！");
+                }
                 break;
             case -1:
                 System.out.println("用户不存在！");
