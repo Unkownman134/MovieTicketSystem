@@ -40,9 +40,9 @@ public class MovieDao {
     }
 
     public boolean addMovie(Movie movie) throws SQLException {
-        try(Connection conn =JDBCUtils.getConnection()) {
+        try (Connection conn = JDBCUtils.getConnection()) {
             String sql = "INSERT INTO movies (title, description, showtime, duration, total_seats, available_seats, version, price) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            try(PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setString(1, movie.getTitle());
                 pstmt.setString(2, movie.getDescription());
                 pstmt.setTimestamp(3, Timestamp.valueOf(movie.getShowtime()));
@@ -55,5 +55,43 @@ public class MovieDao {
                 return pstmt.executeUpdate() > 0;
             }
         }
+    }
+
+    public Movie getMovieById(int movieId) throws SQLException {
+        String sql = "SELECT * FROM movies WHERE id = ?";
+        try (Connection conn = JDBCUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, movieId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    Movie movie = new Movie();
+                    movie.setId(rs.getInt("id"));
+                    movie.setTitle(rs.getString("title"));
+                    movie.setDescription(rs.getString("description"));
+                    movie.setShowtime(rs.getTimestamp("showtime").toLocalDateTime());
+                    movie.setDuration(rs.getInt("duration"));
+                    movie.setTotalSeats(rs.getInt("total_seats"));
+                    movie.setAvailableSeats(rs.getInt("available_seats"));
+                    movie.setVersion(rs.getInt("version"));
+                    movie.setPrice(rs.getBigDecimal("price"));
+                    return movie;
+                }
+                return null;
+            }
+        }
+    }
+
+    public boolean decreaseSeatsWithVersion(int movieId, int seats, Integer version) {
+        try (Connection conn = JDBCUtils.getConnection()) {
+            String sql = "UPDATE movies SET available_seats = available_seats - ?, version = version + 1 WHERE id = ? AND version = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, seats);
+                pstmt.setInt(2, movieId);
+                pstmt.setInt(3, version);
+                return pstmt.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("系统错误！: " + e.getMessage());
+        }
+        return false;
     }
 }
