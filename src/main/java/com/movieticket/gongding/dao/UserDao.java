@@ -5,6 +5,7 @@ import com.movieticket.gongding.utils.JDBCUtils;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class UserDao {
@@ -23,6 +24,32 @@ public class UserDao {
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public User findUserByUsername(String username) throws SQLException {
+        try (Connection conn = JDBCUtils.getConnection()) {
+            String sql = "SELECT * FROM users WHERE username = ?";
+
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, username);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        User user = new User();
+                        user.setId(rs.getInt("id"));
+                        user.setUsername(rs.getString("username"));
+                        user.setPasswordHash(rs.getString("password_hash"));
+                        user.setSalt(rs.getString("salt"));
+                        user.setEmail(rs.getString("email"));
+                        user.setStatus(rs.getString("status"));
+                        user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                        user.setLastLogin(rs.getTimestamp("last_login") != null ?
+                                rs.getTimestamp("last_login").toLocalDateTime() : null);
+                        return user;
+                    }
+                    return null;
+                }
+            }
         }
     }
 }
