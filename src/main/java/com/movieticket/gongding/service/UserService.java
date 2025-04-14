@@ -10,6 +10,11 @@ public class UserService {
     //用户注册服务
     public boolean register(String username, String passwordHash, String email) {
         try {
+            //注册用户名已存在
+            if (userDao.findUserByUsername(username) != null) {
+                return false;
+            }
+
             String salt = PasswordUtils.generateSalt();
             String hashedPassword = PasswordUtils.hashPassword(passwordHash, salt);
 
@@ -43,6 +48,8 @@ public class UserService {
                 return -3;
             }
 
+            //更新用户登录时间
+            userDao.updateLoginTime(user.getId());
             //登录成功
             return 1;
         } catch (Exception e) {

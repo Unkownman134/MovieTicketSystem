@@ -52,4 +52,15 @@ public class UserDao {
             }
         }
     }
+
+    public boolean updateLoginTime(int userId) {
+        String sql = "UPDATE users SET last_login = NOW() WHERE id = ?";
+        try (Connection conn = JDBCUtils.getConnection();PreparedStatement pstmt =conn.prepareStatement(sql)) {
+            pstmt.setInt(1, userId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
