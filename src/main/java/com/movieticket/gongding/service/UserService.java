@@ -24,4 +24,30 @@ public class UserService {
             return false;
         }
     }
+
+    public int login(String username, String password) {
+        try {
+            User user = userDao.findUserByUsername(username);
+            if (user == null) {
+                //用户不存在
+                return -1;
+            }
+            if ("BLACKLIST".equals(user.getStatus())) {
+                //用户被拉黑
+                return -2;
+            }
+
+            String calculatedHash = PasswordUtils.hashPassword(password, user.getSalt());
+            if (!calculatedHash.equals(user.getPasswordHash())) {
+                //密码错误
+                return -3;
+            }
+
+            //登录成功
+            return 1;
+        } catch (Exception e) {
+            //系统错误
+            return -4;
+        }
+    }
 }
