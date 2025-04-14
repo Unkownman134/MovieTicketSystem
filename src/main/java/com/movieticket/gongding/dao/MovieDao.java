@@ -3,10 +3,7 @@ package com.movieticket.gongding.dao;
 import com.movieticket.gongding.entity.Movie;
 import com.movieticket.gongding.utils.JDBCUtils;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,5 +37,23 @@ public class MovieDao {
         movie.setVersion(rs.getInt("version"));
         movie.setPrice(rs.getBigDecimal("price"));
         return movie;
+    }
+
+    public boolean addMovie(Movie movie) throws SQLException {
+        try(Connection conn =JDBCUtils.getConnection()) {
+            String sql = "INSERT INTO movies (title, description, showtime, duration, total_seats, available_seats, version, price) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            try(PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, movie.getTitle());
+                pstmt.setString(2, movie.getDescription());
+                pstmt.setTimestamp(3, Timestamp.valueOf(movie.getShowtime()));
+                pstmt.setInt(4, movie.getDuration());
+                pstmt.setInt(5, movie.getTotalSeats());
+                pstmt.setInt(6, movie.getTotalSeats());
+                pstmt.setInt(7, 0);
+                pstmt.setBigDecimal(8, movie.getPrice());
+
+                return pstmt.executeUpdate() > 0;
+            }
+        }
     }
 }

@@ -42,6 +42,6 @@ public class UserController {
     private void printMovieInfo(Movie movie) {
         System.out.printf("\n【%s】 时长：%d分钟\n", movie.getTitle(), movie.getDuration());
         System.out.printf("放映时间：%s\n", movie.getShowtime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-        System.out.printf("剩余座位：%d/总座位：%d 票价：%.2f元\n", movie.getAvailableSeats(), movie.getTotalSeats(), movie.getPrice());
+        System.out.printf("剩余座位：%d 总座位：%d 票价：%.2f元\n", movie.getAvailableSeats(), movie.getTotalSeats(), movie.getPrice());
     }
 }

@@ -1,5 +1,6 @@
 package com.movieticket.gongding.view;
 
+import com.movieticket.gongding.controller.AdminController;
 import com.movieticket.gongding.controller.UserController;
 import com.movieticket.gongding.dao.UserDao;
 import com.movieticket.gongding.service.UserService;
@@ -11,13 +12,15 @@ public class Main {
     private final Scanner scanner = new Scanner(System.in);
     private final UserService userService = new UserService();
     private final UserController userController = new UserController();
-private final UserDao userDao = new UserDao();
+    private final UserDao userDao = new UserDao();
+    private final AdminController adminController = new AdminController();
 
     public void start() {
         while (true) {
             System.out.println("\n=== 电影售票系统 ===");
             System.out.println("1. 用户登录");
             System.out.println("2. 用户注册");
+            System.out.println("3. 管理员登录");
             System.out.println("0. 退出系统");
             System.out.print("请选择操作：");
 
@@ -29,6 +32,7 @@ private final UserDao userDao = new UserDao();
                     userRegister();
                     break;
                 case "3":
+                    adminLogin();
                     break;
                 case "0":
                     System.out.println("再见！");
@@ -36,6 +40,19 @@ private final UserDao userDao = new UserDao();
                 default:
                     System.out.println("无效选择，请重新输入！");
             }
+        }
+    }
+
+    private void adminLogin() {
+        System.out.print("请输入管理员账号：");
+        String adminname = scanner.nextLine();
+        System.out.print("请输入密码：");
+        String password = scanner.nextLine();
+
+        if ("admin".equals(adminname) && "admin123".equals(password)) {
+            adminController.showAdminMenu();
+        } else {
+            System.out.println("管理员账号或密码错误！");
         }
     }
 
