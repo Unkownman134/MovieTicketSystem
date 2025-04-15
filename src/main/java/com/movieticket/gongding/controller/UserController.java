@@ -22,6 +22,7 @@ public class UserController {
             System.out.println("1. 查看电影列表");
             System.out.println("2. 购买电影票");
             System.out.println("3. 查看我的订单");
+            System.out.println("4. 申请退票");
             System.out.println("0. 退出登录");
             System.out.print("请选择操作：");
 
@@ -37,6 +38,7 @@ public class UserController {
                     orderDao.getOrdersByUser(user.getId()).forEach(this::printOrderInfo);
                     break;
                 case "4":
+                    userService.applyRefund(user.getId());
                     break;
                 case "0":
                     return;

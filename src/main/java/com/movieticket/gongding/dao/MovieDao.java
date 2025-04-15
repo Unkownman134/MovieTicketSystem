@@ -57,7 +57,7 @@ public class MovieDao {
         }
     }
 
-    public Movie getMovieById(int movieId) throws SQLException {
+    public Movie getMovieById(int movieId) {
         String sql = "SELECT * FROM movies WHERE id = ?";
         try (Connection conn = JDBCUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, movieId);
@@ -77,7 +77,10 @@ public class MovieDao {
                 }
                 return null;
             }
+        } catch (SQLException e) {
+            System.out.println("系统错误！: " + e.getMessage());
         }
+        return null;
     }
 
     public boolean decreaseSeatsWithVersion(int movieId, int seats, Integer version) {

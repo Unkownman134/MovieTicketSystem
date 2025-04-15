@@ -2,14 +2,17 @@ package com.movieticket.gongding.service;
 
 import com.movieticket.gongding.dao.MovieDao;
 import com.movieticket.gongding.dao.OrderDao;
+import com.movieticket.gongding.dao.RefundRequestDao;
 import com.movieticket.gongding.dao.UserDao;
 import com.movieticket.gongding.entity.Movie;
 import com.movieticket.gongding.entity.Order;
+import com.movieticket.gongding.entity.RefundRequest;
 import com.movieticket.gongding.entity.User;
 import com.movieticket.gongding.utils.PasswordUtils;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
 
@@ -18,10 +21,13 @@ public class UserService {
     private final UserDao userDao = new UserDao();
     private final MovieDao movieDao = new MovieDao();
     private final OrderDao orderDao = new OrderDao();
+    private final RefundRequestDao refundRequestDao = new RefundRequestDao();
     //最大购票尝试次数
     private static final int MAX_RETRY = 3;
     //停止售票提前时间
     private static final int MAX_PLUS_TIME = 10;
+    //停止退票提前时间
+    private static final int MAX_REFUND_PLUS_TIME = 1;
 
     //用户注册服务
     public boolean register(String username, String passwordHash, String email) {
@@ -96,55 +102,131 @@ public class UserService {
 
             //尝试购票
             for (int retry = 0; retry < MAX_RETRY; retry++) {
-                try {
-                    Movie movie = movieDao.getMovieById(movieId);
-                    if (movie == null) {
-                        System.out.println("电影不存在！");
-                        return;
-                    }
-                    if (movie.getAvailableSeats() < seats) {
-                        System.out.println("剩余座位不足！");
-                        return;
-                    }
-                    if (movie.getShowtime().isBefore(LocalDateTime.now().plusMinutes(MAX_PLUS_TIME))) {
-                        System.out.println("距离电影放映不足10分钟，停止售票！");
-                        return;
-                    }
-
-                    //解决高并发冲突
-                    boolean success = movieDao.decreaseSeatsWithVersion(movieId, seats, movie.getVersion());
-
-                    if (!success) {
-                        if (retry == MAX_RETRY - 1) {
-                            System.out.println("系统繁忙，请稍后重试！");
-                            return;
-                        }
-                        continue;
-                    }
-
-                    Order order = new Order();
-                    order.setUserId(userId);
-                    order.setMovieId(movieId);
-                    order.setSeatCount(seats);
-                    order.setStatus("PAID");
-                    order.setShowTime(movie.getShowtime());
-                    order.setDuration(movie.getDuration());
-                    order.setMovieTitle(movie.getTitle());
-                    order.setOrderTime(LocalDateTime.now());
-
-                    if (!orderDao.creatOrder(order)) {
-                        System.out.println("订单创建失败!");
-                        return;
-                    }
-                    System.out.println("成功购票！订单号：" + order.getId());
+                Movie movie = movieDao.getMovieById(movieId);
+                if (movie == null) {
+                    System.out.println("电影不存在！");
                     return;
-                } catch (SQLException e) {
+                }
+                if (movie.getAvailableSeats() < seats) {
+                    System.out.println("剩余座位不足！");
+                    return;
+                }
+                if (movie.getShowtime().isBefore(LocalDateTime.now().plusMinutes(MAX_PLUS_TIME))) {
+                    System.out.println("距离电影放映不足10分钟，停止售票！");
+                    return;
+                }
+
+                //解决高并发冲突
+                boolean success = movieDao.decreaseSeatsWithVersion(movieId, seats, movie.getVersion());
+
+                if (!success) {
                     if (retry == MAX_RETRY - 1) {
-                        System.out.println("系统错误！" + e.getMessage());
+                        System.out.println("系统繁忙，请稍后重试！");
                         return;
                     }
+                    continue;
+                }
+
+                Order order = new Order();
+                order.setUserId(userId);
+                order.setMovieId(movieId);
+                order.setSeatCount(seats);
+                order.setStatus("PAID");
+                order.setShowTime(movie.getShowtime());
+                order.setDuration(movie.getDuration());
+                order.setMovieTitle(movie.getTitle());
+                order.setOrderTime(LocalDateTime.now());
+
+                if (!orderDao.creatOrder(order)) {
+                    System.out.println("订单创建失败!");
+                    return;
+                }
+                System.out.println("成功购票！订单号：" + order.getId());
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("输入格式错误！");
+        }
+    }
+
+    public void applyRefund(int userId) {
+        List<Order> refundableOrders = refundRequestDao.getRefundableOrders(userId);
+
+        if (refundableOrders.isEmpty()) {
+            System.out.println("您当前没有可退票的订单！");
+            return;
+        }
+
+        // 显示订单列表
+        System.out.println("\n=== 可退票订单 ===");
+        System.out.printf("%-10s %-15s %-10s %-20s\n", "订单号", "电影名称", "座位数", "下单时间");
+
+        refundableOrders.forEach(order -> {
+            Movie movie = movieDao.getMovieById(order.getMovieId());
+            System.out.printf("%-10d %-15s %-10d %-20s\n", order.getId(), movie.getTitle(), order.getSeatCount(), order.getOrderTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+            );
+        });
+
+        try {
+            System.out.print("\n请输入要退款的订单号（0返回）：");
+            int orderId = Integer.parseInt(scanner.nextLine());
+
+            if (orderId == 0) {
+                return;
+            }
+
+            // 验证订单是否有效
+            boolean isValid = false;
+            for (Order o : refundableOrders) {
+                if (o.getId() == orderId) {
+                    isValid = true;
+                    break;
                 }
             }
+
+            if (!isValid) {
+                System.out.println("订单号无效！");
+                return;
+            }
+
+            System.out.print("请输入退款原因：");
+            String reason = scanner.nextLine();
+
+            Order order = orderDao.getOrderById(orderId);
+            if (order == null) {
+                System.out.println("订单不存在");
+                return;
+            }
+
+            if (order.getUserId() != userId) {
+                System.out.println("无权操作此订单");
+                return;
+            }
+            if (!"PAID".equals(order.getStatus())) {
+                System.out.println("当前状态不可退票");
+                return;
+            }
+
+            Movie movie = movieDao.getMovieById(order.getMovieId());
+            if (movie.getShowtime().isBefore(LocalDateTime.now().plusHours(MAX_REFUND_PLUS_TIME))) {
+                System.out.println("已超过退票截止时间，电影开始前1小时截至退票！");
+                return;
+            }
+
+            RefundRequest request = new RefundRequest();
+            request.setOrderId(orderId);
+            request.setReason(reason);
+
+            if (!refundRequestDao.createRequest(request)) {
+                System.out.println("退票申请提交失败");
+                return;
+            }
+            if (!orderDao.updateOrderStatus(orderId, "REFUNDING")) {
+                System.out.println("状态更新失败");
+                return;
+            }
+
+            System.out.println("退票申请已提交，等待审核");
         } catch (NumberFormatException e) {
             System.out.println("输入格式错误！");
         }

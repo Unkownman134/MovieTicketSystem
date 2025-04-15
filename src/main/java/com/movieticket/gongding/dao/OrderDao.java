@@ -60,4 +60,44 @@ public class OrderDao {
         }
         return false;
     }
+
+    public Order getOrderById(int orderId) {
+        String sql = "SELECT * FROM orders WHERE id = ?";
+        try (Connection conn = JDBCUtils.getConnection();PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, orderId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    Order order = new Order();
+                    order.setId(rs.getInt("id"));
+                    order.setUserId(rs.getInt("user_id"));
+                    order.setMovieId(rs.getInt("movie_id"));
+                    order.setSeatCount(rs.getInt("seat_count"));
+                    order.setStatus(rs.getString("status"));
+                    Timestamp orderTime = rs.getTimestamp("order_time");
+                    if (orderTime == null) {
+                        throw new SQLException("订单时间不可为空，订单ID: " + order.getId());
+                    }
+                    order.setOrderTime(orderTime.toLocalDateTime());
+                    return order;
+                }
+                return null;
+            }
+        } catch (SQLException e) {
+            System.err.println("获取订单列表失败: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public boolean updateOrderStatus(int orderId, String status) {
+        String sql = "UPDATE orders SET status = ? WHERE id = ?";
+        try (Connection conn = JDBCUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, status);
+            pstmt.setInt(2, orderId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            return false;
+        }
+    }
 }
