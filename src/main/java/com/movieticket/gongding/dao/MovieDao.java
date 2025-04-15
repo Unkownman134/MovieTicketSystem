@@ -97,4 +97,18 @@ public class MovieDao {
         }
         return false;
     }
+
+    public boolean increaseSeats(Integer movieId, Integer seats) {
+        try (Connection conn = JDBCUtils.getConnection()) {
+            String sql = "UPDATE movies SET available_seats = available_seats + ? WHERE id = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, seats);
+                pstmt.setInt(2, movieId);
+                return pstmt.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("系统错误！: " + e.getMessage());
+        }
+        return false;
+    }
 }

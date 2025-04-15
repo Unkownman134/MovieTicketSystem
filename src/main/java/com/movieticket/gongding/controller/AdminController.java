@@ -1,8 +1,12 @@
 package com.movieticket.gongding.controller;
 
 import com.movieticket.gongding.dao.MovieDao;
+import com.movieticket.gongding.dao.OrderDao;
+import com.movieticket.gongding.dao.RefundRequestDao;
 import com.movieticket.gongding.dao.UserDao;
 import com.movieticket.gongding.entity.Movie;
+import com.movieticket.gongding.entity.Order;
+import com.movieticket.gongding.entity.RefundRequest;
 import com.movieticket.gongding.entity.User;
 import com.movieticket.gongding.service.MovieService;
 import com.movieticket.gongding.service.UserService;
@@ -19,12 +23,15 @@ public class AdminController {
     private final MovieService movieService = new MovieService();
     private final MovieDao movieDao = new MovieDao();
     private final UserDao userDao = new UserDao();
+    private final RefundRequestDao refundRequestDao = new RefundRequestDao();
+    private final OrderDao orderDao = new OrderDao();
 
     public void showAdminMenu() {
         while (true) {
             System.out.println("\n=== 管理员菜单 ===");
             System.out.println("1. 添加新电影");
             System.out.println("2. 查看所有电影");
+            System.out.println("3. 处理退票申请");
             System.out.println("4. 拉黑用户");
             System.out.println("0. 退出登录");
             System.out.print("请选择操作：");
@@ -37,6 +44,7 @@ public class AdminController {
                     movieDao.getAllMovies().forEach(this::printMovieInfo);
                     break;
                 case "3":
+                    processRefund();
                     break;
                 case "4":
                     blockUser();
@@ -46,6 +54,100 @@ public class AdminController {
                 default:
                     System.out.println("无效选择！");
             }
+        }
+    }
+
+    private void processRefund() {
+        // 获取待处理申请
+        List<RefundRequest> requests = refundRequestDao.getAllPendingRequests();
+
+        if (requests.isEmpty()) {
+            System.out.println("\n当前没有待处理的退票申请");
+            return;
+        }
+
+        // 显示申请列表
+        System.out.println("\n=== 待处理退票申请 ===");
+        System.out.printf("%-10s %-10s %-20s %-15s\n", "申请ID", "订单ID", "申请时间", "原因摘要");
+
+        requests.forEach(req -> {
+            String reasonPreview = req.getReason().length() > 15 ? req.getReason().substring(0, 15) + "..." : req.getReason();
+            System.out.printf("%-10d %-10d %-20s %-15s\n", req.getId(), req.getOrderId(), req.getCreatedAt().format(DateTimeFormatter.ofPattern("MM-dd HH:mm")), reasonPreview);
+        });
+
+        try {
+            System.out.print("\n请输入要处理的申请ID（0返回）：");
+            int requestId = Integer.parseInt(scanner.nextLine());
+
+            if (requestId == 0) {
+                return;
+            }
+
+            // 获取申请详情
+            RefundRequest request = refundRequestDao.getRequestDetails(requestId);
+            if (request == null) {
+                System.out.println("申请不存在！");
+                return;
+            }
+
+            // 显示详情
+            System.out.println("\n=== 申请详情 ===");
+            System.out.println("订单ID：" + request.getOrderId());
+            System.out.println("完整原因：" + request.getReason());
+            System.out.println("申请时间：" + request.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+
+            // 处理选择
+            System.out.print("是否同意退票（Y/N）：");
+            boolean approve = "Y".equalsIgnoreCase(scanner.nextLine());
+
+            System.out.print("处理意见：");
+            String adminComment = scanner.nextLine();
+
+            if (request == null) {
+                System.out.println("申请不存在");
+                return;
+            }
+            if (!"PENDING".equals(request.getStatus())) {
+                System.out.println("申请已处理");
+                return;
+            }
+
+            Order order = orderDao.getOrderById(request.getOrderId());
+            if (order == null) {
+                System.out.println("关联订单不存在");
+                return;
+            }
+
+            Movie movie = movieDao.getMovieById(order.getMovieId());
+            if (movie == null) {
+                System.out.println("关联电影不存在");
+                return;
+            }
+
+            String newStatus = approve ? "APPROVED" : "REJECTED";
+            if (!refundRequestDao.updateRequestStatus(requestId, newStatus, adminComment)) {
+                System.out.println("申请状态更新失败");
+            }
+
+            if (approve) {
+                if (!movieDao.increaseSeats(movie.getId(), order.getSeatCount())) {
+                    System.out.println("库存更新失败");
+                    return;
+                }
+                if (!orderDao.updateOrderStatus(order.getId(), "REFUNDED")) {
+                    System.out.println("订单状态更新失败");
+                    return;
+                }
+            } else {
+                if (!orderDao.updateOrderStatus(order.getId(), "PAID")) {
+                    System.out.println("订单状态恢复失败");
+                    return;
+                }
+            }
+            System.out.println("处理完成：" + (approve ? "同意退票" : "拒绝退票"));
+            return;
+        } catch (NumberFormatException e) {
+            System.out.println("输入格式错误，请输入数字ID！");
         }
     }
 
