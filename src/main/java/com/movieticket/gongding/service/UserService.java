@@ -13,8 +13,7 @@ import com.movieticket.gongding.utils.PasswordUtils;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class UserService {
     private final Scanner scanner = new Scanner(System.in);
@@ -98,7 +97,7 @@ public class UserService {
             System.out.print("\n请输入电影ID：");
             int movieId = Integer.parseInt(scanner.nextLine());
             System.out.print("请输入购买座位数：");
-            int seats = Integer.parseInt(scanner.nextLine());
+            int seatsum = Integer.parseInt(scanner.nextLine());
 
             //尝试购票
             for (int retry = 0; retry < MAX_RETRY; retry++) {
@@ -107,7 +106,7 @@ public class UserService {
                     System.out.println("电影不存在！");
                     return;
                 }
-                if (movie.getAvailableSeats() < seats) {
+                if (movie.getAvailableSeats() < seatsum) {
                     System.out.println("剩余座位不足！");
                     return;
                 }
@@ -116,8 +115,32 @@ public class UserService {
                     return;
                 }
 
+                // 显示可用座位
+                String[] availableSeats = movie.getSeats().split(",");
+                System.out.println("可用座位：" + Arrays.toString(availableSeats));
+                // 用户选座
+                System.out.print("请输入要购买的座位号（用逗号分隔，如1,2）：");
+                String selectedSeats = scanner.nextLine();
+                String[] seats = selectedSeats.split(",");
+                // 验证座位是否可用
+                Set<String> availableSet = new HashSet<>(Arrays.asList(availableSeats));
+                for (String seat : seats) {
+                    if (!availableSet.contains(seat.trim())) {
+                        System.out.println("座位 " + seat + " 不可选！");
+                        return;
+                    }
+                }
+                // 更新电影可用座位
+                List<String> remainingSeats = new ArrayList<>(availableSet);
+                remainingSeats.removeAll(Arrays.asList(seats));
+                String newSeats = String.join(",", remainingSeats);
+                if (!movieDao.updateMovieSeats(movieId, newSeats)) {
+                    System.out.println("选座失败！");
+                    return;
+                }
+
                 //解决高并发冲突
-                boolean success = movieDao.decreaseSeatsWithVersion(movieId, seats, movie.getVersion());
+                boolean success = movieDao.decreaseSeatsWithVersion(movieId, seatsum, movie.getVersion());
 
                 if (!success) {
                     if (retry == MAX_RETRY - 1) {
@@ -130,12 +153,13 @@ public class UserService {
                 Order order = new Order();
                 order.setUserId(userId);
                 order.setMovieId(movieId);
-                order.setSeatCount(seats);
+                order.setSeatCount(seatsum);
                 order.setStatus("PAID");
                 order.setShowTime(movie.getShowtime());
                 order.setDuration(movie.getDuration());
                 order.setMovieTitle(movie.getTitle());
                 order.setOrderTime(LocalDateTime.now());
+                order.setSeats(selectedSeats);
 
                 if (!orderDao.creatOrder(order)) {
                     System.out.println("订单创建失败!");

@@ -41,7 +41,7 @@ public class MovieDao {
 
     public boolean addMovie(Movie movie) throws SQLException {
         try (Connection conn = JDBCUtils.getConnection()) {
-            String sql = "INSERT INTO movies (title, description, showtime, duration, total_seats, available_seats, version, price) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO movies (title, description, showtime, duration, total_seats, available_seats, version, price, seats) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setString(1, movie.getTitle());
                 pstmt.setString(2, movie.getDescription());
@@ -51,6 +51,7 @@ public class MovieDao {
                 pstmt.setInt(6, movie.getTotalSeats());
                 pstmt.setInt(7, 0);
                 pstmt.setBigDecimal(8, movie.getPrice());
+                pstmt.setString(9, movie.getSeats());
 
                 return pstmt.executeUpdate() > 0;
             }
@@ -73,6 +74,7 @@ public class MovieDao {
                     movie.setAvailableSeats(rs.getInt("available_seats"));
                     movie.setVersion(rs.getInt("version"));
                     movie.setPrice(rs.getBigDecimal("price"));
+                    movie.setSeats(rs.getString("seats"));
                     return movie;
                 }
                 return null;
@@ -110,5 +112,18 @@ public class MovieDao {
             System.out.println("系统错误！: " + e.getMessage());
         }
         return false;
+    }
+
+    public boolean updateMovieSeats(int movieId, String seats) {
+        String sql = "UPDATE movies SET seats = ? WHERE id = ?";
+        try (Connection conn = JDBCUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, seats);
+            pstmt.setInt(2, movieId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("更新座位失败: " + e.getMessage());
+            return false;
+        }
     }
 }

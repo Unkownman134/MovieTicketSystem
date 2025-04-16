@@ -12,6 +12,7 @@ public class Order {
     private LocalDateTime showTime;
     private Integer duration;
     private String movieTitle;
+    private String seats;
 
     public Integer getId() {
         return id;
@@ -83,5 +84,13 @@ public class Order {
 
     public void setMovieTitle(String movieTitle) {
         this.movieTitle = movieTitle;
+    }
+
+    public String getSeats() {
+        return seats;
+    }
+
+    public void setSeats(String seats) {
+        this.seats = seats;
     }
 }

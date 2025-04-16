@@ -33,8 +33,7 @@ public class OrderDao {
 
     public boolean creatOrder(Order order) {
         try (Connection conn =JDBCUtils.getConnection()) {
-            String sql = "INSERT INTO orders (user_id, movie_id, seat_count, status, order_time, show_time, duration, movie_title) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            String sql = "INSERT INTO orders (user_id, movie_id, seat_count, status, order_time, show_time, duration, movie_title, seats) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";            try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 pstmt.setInt(1, order.getUserId());
                 pstmt.setInt(2, order.getMovieId());
                 pstmt.setInt(3, order.getSeatCount());
@@ -43,6 +42,7 @@ public class OrderDao {
                 pstmt.setTimestamp(6, Timestamp.valueOf(order.getShowTime()));
                 pstmt.setInt(7, order.getDuration());
                 pstmt.setString(8, order.getMovieTitle());
+                pstmt.setString(9, order.getSeats());
 
                 int affectedRows = pstmt.executeUpdate();
                 if (affectedRows > 0) {
@@ -73,6 +73,7 @@ public class OrderDao {
                     order.setMovieId(rs.getInt("movie_id"));
                     order.setSeatCount(rs.getInt("seat_count"));
                     order.setStatus(rs.getString("status"));
+                    order.setSeats(rs.getString("seats"));
                     Timestamp orderTime = rs.getTimestamp("order_time");
                     if (orderTime == null) {
                         throw new SQLException("订单时间不可为空，订单ID: " + order.getId());

@@ -138,6 +138,12 @@ public class AdminController {
                     System.out.println("订单状态更新失败");
                     return;
                 }
+
+                // 释放座位
+                String refundSeats = order.getSeats();
+                String currentSeats = movie.getSeats();
+                String updatedSeats = currentSeats + "," + refundSeats;
+                movieDao.updateMovieSeats(movie.getId(), updatedSeats);
             } else {
                 if (!orderDao.updateOrderStatus(order.getId(), "PAID")) {
                     System.out.println("订单状态恢复失败");
@@ -220,7 +226,7 @@ public class AdminController {
             }
             String seats = seatsBuilder.toString();
 
-            boolean success = movieService.addMovie(title, description, showtime, duration, seatsum, seats,price);
+            boolean success = movieService.addMovie(title, description, showtime, duration, seatsum, seats, price);
             System.out.println(success ? "添加成功！" : "添加失败！");
         } catch (NumberFormatException e) {
             System.out.println("价格格式错误，请输入正确数字（如：39.99）");

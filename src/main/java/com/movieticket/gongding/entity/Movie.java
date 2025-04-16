@@ -13,6 +13,7 @@ public class Movie {
     private Integer availableSeats;
     private Integer version;
     private BigDecimal price;
+    private String seats;
 
     public Integer getId() {
         return id;
@@ -84,5 +85,13 @@ public class Movie {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public String getSeats() {
+        return seats;
+    }
+
+    public void setSeats(String seats) {
+        this.seats = seats;
     }
 }
