@@ -200,11 +200,27 @@ public class AdminController {
             System.out.print("时长（分钟）：");
             int duration = Integer.parseInt(scanner.nextLine());
             System.out.print("总座位数：");
-            int seats = Integer.parseInt(scanner.nextLine());
+            int seatsum = Integer.parseInt(scanner.nextLine());
             System.out.print("请输入票价：");
             BigDecimal price = new BigDecimal(scanner.nextLine());
 
-            boolean success = movieService.addMovie(title, description, showtime, duration, seats, price);
+            System.out.print("请输入座位号范围（格式：起始号-结束号，如1-50）：");
+            String seatRange = scanner.nextLine();
+            String[] range = seatRange.split("-");
+            int start = Integer.parseInt(range[0]);
+            int end = Integer.parseInt(range[1]);
+            // 生成逗号分隔的座位号字符串
+            StringBuilder seatsBuilder = new StringBuilder();
+            for (int i = start; i <= end; i++) {
+                seatsBuilder.append(i).append(",");
+            }
+            if (!seatsBuilder.isEmpty()) {
+                // 删除最后一个逗号
+                seatsBuilder.deleteCharAt(seatsBuilder.length() - 1);
+            }
+            String seats = seatsBuilder.toString();
+
+            boolean success = movieService.addMovie(title, description, showtime, duration, seatsum, seats,price);
             System.out.println(success ? "添加成功！" : "添加失败！");
         } catch (NumberFormatException e) {
             System.out.println("价格格式错误，请输入正确数字（如：39.99）");

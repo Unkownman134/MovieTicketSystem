@@ -62,6 +62,7 @@ public class RefundRequestDao {
                     request.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
                     request.setProcessedAt(rs.getTimestamp("processed_at") != null ? rs.getTimestamp("processed_at").toLocalDateTime() : null);
                     request.setAdminComment(rs.getString("admin_comment"));
+                    requests.add(request);
                 }
             }
             return requests;
@@ -85,6 +86,7 @@ public class RefundRequestDao {
                         request.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
                         request.setProcessedAt(rs.getTimestamp("processed_at") != null ? rs.getTimestamp("processed_at").toLocalDateTime() : null);
                         request.setAdminComment(rs.getString("admin_comment"));
+                        return request;
                     }
                 }
             }
