@@ -1,5 +1,6 @@
 package com.movieticket.gongding.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class User {
@@ -11,6 +12,7 @@ public class User {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime lastLogin;
+    private BigDecimal money;
 
     public Integer getId() {
         return id;
@@ -74,5 +76,13 @@ public class User {
 
     public void setLastLogin(LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;
+    }
+
+    public BigDecimal getMoney() {
+        return money;
+    }
+
+    public void setMoney(BigDecimal money) {
+        this.money = money;
     }
 }

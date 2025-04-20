@@ -40,7 +40,7 @@ public class UserController {
                     movieDao.getAllMovies().forEach(this::printMovieInfo);
                     break;
                 case "2":
-                    userService.purchaseTicket(user.getId());
+                    userService.purchaseTicket(user.getId(),user.getUsername(),user.getMoney());
                     break;
                 case "3":
                     orderDao.getOrdersByUser(user.getId()).forEach(this::printOrderInfo);

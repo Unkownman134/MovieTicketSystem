@@ -10,6 +10,7 @@ import com.movieticket.gongding.entity.RefundRequest;
 import com.movieticket.gongding.entity.User;
 import com.movieticket.gongding.utils.PasswordUtils;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -29,7 +30,7 @@ public class UserService {
     private static final int MAX_REFUND_PLUS_TIME = 5;
 
     //用户注册服务
-    public boolean register(String username, String passwordHash, String email) {
+    public boolean register(String username, String passwordHash, String email, BigDecimal money) {
         try {
             //注册用户名已存在
             if (userDao.findUserByUsername(username) != null) {
@@ -44,6 +45,7 @@ public class UserService {
             user.setPasswordHash(hashedPassword);
             user.setEmail(email);
             user.setSalt(salt);
+            user.setMoney(money);
 
             return userDao.addUser(user);
         } catch (Exception e) {
@@ -79,8 +81,10 @@ public class UserService {
         }
     }
 
-    public void purchaseTicket(int userId) {
+    public void purchaseTicket(int userId, String username, BigDecimal money) {
         List<Movie> movies = movieDao.getAllMovies();
+        User user = userDao.findUserByUsername(username);
+
         if (movies.isEmpty()) {
             System.out.println("当前没有电影！");
             return;
@@ -113,6 +117,13 @@ public class UserService {
                 if (movie.getShowtime().isBefore(LocalDateTime.now().plusMinutes(MAX_PLUS_TIME))) {
                     System.out.println("距离电影放映不足5分钟，停止售票！");
                     return;
+                }
+                BigDecimal totalPrice = movie.getPrice().multiply(BigDecimal.valueOf(seatsum));
+                if (user.getMoney().compareTo(totalPrice) < 0) {
+                    System.out.println("余额不足！");
+                    return;
+                } else {
+                    userDao.updateUserMoney(userId,user.getMoney(),totalPrice);
                 }
 
                 // 显示可用座位
@@ -170,6 +181,8 @@ public class UserService {
             }
         } catch (NumberFormatException e) {
             System.out.println("输入格式错误！");
+        } catch (SQLException e) {
+            System.out.println("系统异常！");
         }
     }
 

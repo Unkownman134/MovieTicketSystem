@@ -5,6 +5,7 @@ import com.movieticket.gongding.controller.UserController;
 import com.movieticket.gongding.dao.UserDao;
 import com.movieticket.gongding.service.UserService;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Scanner;
 
@@ -89,8 +90,10 @@ public class Main {
         String password = scanner.nextLine();
         System.out.print("请输入邮箱：");
         String email = scanner.nextLine();
+        System.out.print("请输入余额：");
+        BigDecimal money = new BigDecimal(scanner.nextLine());
 
-        if (userService.register(username, password, email)) {
+        if (userService.register(username, password, email, money)) {
             System.out.println("注册成功！");
         } else {
             System.out.println("注册失败，用户名已存在！");

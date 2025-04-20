@@ -3,6 +3,7 @@ package com.movieticket.gongding.dao;
 import com.movieticket.gongding.entity.User;
 import com.movieticket.gongding.utils.JDBCUtils;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,7 +13,7 @@ import java.util.List;
 
 public class UserDao {
     public boolean addUser(User user) {
-        String sql = "INSERT INTO users (username, password_hash, salt, email) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO users (username, password_hash, salt, email, money) VALUES (?, ?, ?, ? , ?)";
         try (Connection conn = JDBCUtils.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -20,6 +21,7 @@ public class UserDao {
             pstmt.setString(2, user.getPasswordHash());
             pstmt.setString(3, user.getSalt());
             pstmt.setString(4, user.getEmail());
+            pstmt.setBigDecimal(5, user.getMoney());
 
             //影响行数大于0为注册成功返回true
             return pstmt.executeUpdate() > 0;
@@ -47,6 +49,7 @@ public class UserDao {
                         user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
                         user.setLastLogin(rs.getTimestamp("last_login") != null ?
                                 rs.getTimestamp("last_login").toLocalDateTime() : null);
+                        user.setMoney(rs.getBigDecimal("money"));
                         return user;
                     }
                     return null;
@@ -94,6 +97,17 @@ public class UserDao {
             String sql = "UPDATE users SET status = ? WHERE id = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setString(1, "BLACKLIST");
+                pstmt.setInt(2, userId);
+                return pstmt.executeUpdate() > 0;
+            }
+        }
+    }
+
+    public boolean updateUserMoney(int userId, BigDecimal money, BigDecimal totalPrice) throws SQLException {
+        try (Connection conn = JDBCUtils.getConnection()) {
+            String sql = "UPDATE users SET money = ? WHERE id = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setBigDecimal(1, money.subtract(totalPrice));
                 pstmt.setInt(2, userId);
                 return pstmt.executeUpdate() > 0;
             }
