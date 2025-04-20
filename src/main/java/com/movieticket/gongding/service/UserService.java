@@ -21,12 +21,12 @@ public class UserService {
     private final MovieDao movieDao = new MovieDao();
     private final OrderDao orderDao = new OrderDao();
     private final RefundRequestDao refundRequestDao = new RefundRequestDao();
-    //最大购票尝试次数
+    //最大购票尝试次数  
     private static final int MAX_RETRY = 3;
     //停止售票提前时间
-    private static final int MAX_PLUS_TIME = 10;
+    static final int MAX_PLUS_TIME = 5;
     //停止退票提前时间
-    private static final int MAX_REFUND_PLUS_TIME = 1;
+    private static final int MAX_REFUND_PLUS_TIME = 5;
 
     //用户注册服务
     public boolean register(String username, String passwordHash, String email) {
@@ -111,7 +111,7 @@ public class UserService {
                     return;
                 }
                 if (movie.getShowtime().isBefore(LocalDateTime.now().plusMinutes(MAX_PLUS_TIME))) {
-                    System.out.println("距离电影放映不足10分钟，停止售票！");
+                    System.out.println("距离电影放映不足5分钟，停止售票！");
                     return;
                 }
 
@@ -232,8 +232,8 @@ public class UserService {
             }
 
             Movie movie = movieDao.getMovieById(order.getMovieId());
-            if (movie.getShowtime().isBefore(LocalDateTime.now().plusHours(MAX_REFUND_PLUS_TIME))) {
-                System.out.println("已超过退票截止时间，电影开始前1小时截至退票！");
+            if (movie.getShowtime().isBefore(LocalDateTime.now().plusMinutes(MAX_REFUND_PLUS_TIME))) {
+                System.out.println("已超过退票截止时间，电影开始前5分钟截至退票！");
                 return;
             }
 

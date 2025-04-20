@@ -4,6 +4,7 @@ import com.movieticket.gongding.entity.Order;
 import com.movieticket.gongding.utils.JDBCUtils;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,8 +33,9 @@ public class OrderDao {
     }
 
     public boolean creatOrder(Order order) {
-        try (Connection conn =JDBCUtils.getConnection()) {
-            String sql = "INSERT INTO orders (user_id, movie_id, seat_count, status, order_time, show_time, duration, movie_title, seats) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";            try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection conn = JDBCUtils.getConnection()) {
+            String sql = "INSERT INTO orders (user_id, movie_id, seat_count, status, order_time, show_time, duration, movie_title, seats) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 pstmt.setInt(1, order.getUserId());
                 pstmt.setInt(2, order.getMovieId());
                 pstmt.setInt(3, order.getSeatCount());
@@ -63,7 +65,7 @@ public class OrderDao {
 
     public Order getOrderById(int orderId) {
         String sql = "SELECT * FROM orders WHERE id = ?";
-        try (Connection conn = JDBCUtils.getConnection();PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = JDBCUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, orderId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -100,5 +102,32 @@ public class OrderDao {
         } catch (SQLException e) {
             return false;
         }
+    }
+
+    public List<Order> getUpcomingAndOngoingOrders(int userId) {
+        LocalDateTime now = LocalDateTime.now();
+        String sql = "SELECT o.*, m.showtime, m.duration, m.title AS movie_title " +
+                "FROM orders o " +
+                "JOIN movies m ON o.movie_id = m.id " +
+                "WHERE o.user_id = ? " +
+                "AND m.showtime <= DATE_ADD(NOW(), INTERVAL 10 MINUTE) " + // 10分钟内开始的或已开始的
+                "AND DATE_ADD(m.showtime, INTERVAL m.duration MINUTE) > NOW()"; // 未结束的
+
+        List<Order> orders = new ArrayList<>();
+        try (Connection conn = JDBCUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Order order = new Order();
+                order.setShowTime(rs.getTimestamp("showtime").toLocalDateTime());
+                order.setDuration(rs.getInt("duration"));
+                order.setMovieTitle(rs.getString("movie_title"));
+                orders.add(order);
+            }
+        } catch (SQLException e) {
+            System.err.println("查询待提醒订单失败：" + e.getMessage());
+        }
+        return orders;
     }
 }

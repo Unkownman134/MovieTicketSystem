@@ -29,7 +29,7 @@ public class UserDao {
         }
     }
 
-    public User findUserByUsername(String username) throws SQLException {
+    public User findUserByUsername(String username) {
         try (Connection conn = JDBCUtils.getConnection()) {
             String sql = "SELECT * FROM users WHERE username = ?";
 
@@ -52,7 +52,10 @@ public class UserDao {
                     return null;
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        return null;
     }
 
     public boolean updateLoginTime(int userId) {

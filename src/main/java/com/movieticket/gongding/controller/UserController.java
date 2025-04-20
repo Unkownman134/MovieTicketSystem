@@ -5,6 +5,7 @@ import com.movieticket.gongding.dao.OrderDao;
 import com.movieticket.gongding.entity.Movie;
 import com.movieticket.gongding.entity.Order;
 import com.movieticket.gongding.entity.User;
+import com.movieticket.gongding.service.ReminderService;
 import com.movieticket.gongding.service.UserService;
 
 import java.time.format.DateTimeFormatter;
@@ -15,8 +16,15 @@ public class UserController {
     private final MovieDao movieDao = new MovieDao();
     private final OrderDao orderDao = new OrderDao();
     private final UserService userService = new UserService();
+    private final ReminderService reminderService = new ReminderService();
 
     public void showUserMenu(User user) {
+        String reminders = reminderService.generateReminders(user.getId());
+        if (!reminders.trim().isEmpty()) {
+            System.out.println("\n=== 您的观影提醒 ===");
+            System.out.println(reminders);
+        }
+
         while (true) {
             System.out.println("=== 用户菜单 (" + user.getUsername() + ") ===");
             System.out.println("1. 查看电影列表");

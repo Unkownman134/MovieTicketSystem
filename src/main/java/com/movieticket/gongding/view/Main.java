@@ -65,12 +65,8 @@ public class Main {
         int result = userService.login(username, password);
         switch (result) {
             case 1:
-                try {
-                    //用户界面
-                    userController.showUserMenu(userDao.findUserByUsername(username));
-                } catch (SQLException e) {
-                    System.out.println("登录失败！");
-                }
+                //用户界面
+                userController.showUserMenu(userDao.findUserByUsername(username));
                 break;
             case -1:
                 System.out.println("用户不存在！");
