@@ -122,8 +122,6 @@ public class UserService {
                 if (user.getMoney().compareTo(totalPrice) < 0) {
                     System.out.println("余额不足！");
                     return;
-                } else {
-                    userDao.updateUserMoney(userId,totalPrice,"SUB");
                 }
 
                 // 显示可用座位
@@ -141,14 +139,6 @@ public class UserService {
                         return;
                     }
                 }
-                // 更新电影可用座位
-                List<String> remainingSeats = new ArrayList<>(availableSet);
-                remainingSeats.removeAll(Arrays.asList(seats));
-                String newSeats = String.join(",", remainingSeats);
-                if (!movieDao.updateMovieSeats(movieId, newSeats)) {
-                    System.out.println("选座失败！");
-                    return;
-                }
 
                 //解决高并发冲突
                 boolean success = movieDao.decreaseSeatsWithVersion(movieId, seatsum, movie.getVersion());
@@ -160,6 +150,17 @@ public class UserService {
                     }
                     continue;
                 }
+
+                // 更新电影可用座位
+                List<String> remainingSeats = new ArrayList<>(availableSet);
+                remainingSeats.removeAll(Arrays.asList(seats));
+                String newSeats = String.join(",", remainingSeats);
+                if (!movieDao.updateMovieSeats(movieId, newSeats)) {
+                    System.out.println("选座失败！");
+                    return;
+                }
+
+                userDao.updateUserMoney(userId,totalPrice,"SUB");
 
                 Order order = new Order();
                 order.setUserId(userId);
