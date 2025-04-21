@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>用户登录</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+<h2>用户登录</h2>
+<form id="loginForm">
+    <div>
+        <label>用户名：</label>
+        <input type="text" name="username" required>
+    </div>
+    <div>
+        <label>密码：</label>
+        <input type="password" name="password" required>
+    </div>
+    <button type="submit">登录</button>
+</form>
+<p id="errorMsg" style="color: red; display: none;">用户名或密码错误！</p>
+<p>
+    没有账号？<a href="register.html">点击注册~</a>
+</p>
+<p>
+    <button id="adminLoginBtn">管理员登录</button>
+</p>
+
+<!-- 管理员登录弹窗 -->
+<div id="adminModal" style="display: none;">
+    <h3>管理员登录</h3>
+    <form id="adminLoginForm">
+        <div>
+            <label>管理员账号：</label>
+            <input type="text" name="adminName" required>
+        </div>
+        <div>
+            <label>密码：</label>
+            <input type="password" name="adminPass" required>
+        </div>
+        <button type="submit">登录</button>
+        <p id="adminError" style="color: red; display: none;">账号或密码错误！</p>
+    </form>
+</div>
+
+<script>
+    $(function () {
+        const ctx = '/' + window.location.pathname.split('/')[1];
+
+        $("#loginForm").on("submit", function (e) {
+            e.preventDefault();
+            const formData = $(this).serialize();
+            $.post(ctx + "/login", formData, function (res) {
+                if (res === "success") {
+                    const username = $("input[name='username']").val();
+                    $("#errorMsg").hide();
+                    location.href = "user.html?username=" + encodeURIComponent(username);
+                } else if (res === "wrong_pass") {
+                    $("#errorMsg").text("用户名或密码错误！").show();
+                } else if (res==="blocked") {
+                    $("#errorMsg").text("用户被拉黑！").show();
+                } else if (res==="no_user") {
+                    $("#errorMsg").text("用户不存在！").show();
+                } else {
+                    $("#errorMsg").text("系统错误！").show();
+                }
+            });
+        });
+
+        $("#adminLoginBtn").on("click", function () {
+            $("#adminModal").show();
+        });
+
+        $("#adminLoginForm").on("submit", function (e) {
+            e.preventDefault();
+            const formData = $(this).serialize();
+            $.post(ctx + "/adminLogin", formData, function (res) {
+                if (res === "success") {
+                    $("#adminError").hide();
+                    location.href = "admin.html";
+                } else {
+                    $("#adminError").text("账号或密码错误！").show();
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

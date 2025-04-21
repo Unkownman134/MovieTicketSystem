@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>用户注册</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<form id="registerForm">
+    <div>
+        <label>用户名：</label>
+        <input type="text" name="username" required>
+    </div>
+    <div>
+        <label>密码：</label>
+        <input type="password" name="password" required>
+    </div>
+    <div>
+        <label>确认密码：</label>
+        <input type="password" id="confirmPassword" required>
+    </div>
+    <div>
+        <label>邮箱：</label>
+        <input type="email" name="email" required>
+    </div>
+    <div>
+        <label>余额：</label>
+        <input type="number" name="money" step="0.01" min="0" required>
+    </div>
+    <button type="submit">注册</button>
+</form>
+
+<div id="message">
+    <p id="errorMsg" style="color: red; display: none;"></p>
+    <p id="successMsg" style="color: green; display: none;">
+        注册成功！请前往<a href="login.html">登录</a>
+    </p>
+</div>
+
+<script>
+    $(document).ready(function() {
+        const contextPath = '/' + window.location.pathname.split('/')[1];
+
+        $("#errorMsg").hide();
+        $("#successMsg").hide();
+
+        $("#registerForm").submit(function(e) {
+            e.preventDefault();
+
+            $("#errorMsg").hide();
+            $("#successMsg").hide();
+
+            const password = $("input[name='password']").val();
+            const confirmPassword = $("#confirmPassword").val();
+            if (password !== confirmPassword) {
+                showError("两次输入的密码不一致");
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: contextPath + "/register",
+                data: $(this).serialize(),
+                success: function(response) {
+                    handleResponse(response);
+                },
+                error: function(xhr) {
+                    showError("请求失败: " + xhr.statusText);
+                }
+            });
+        });
+
+        function handleResponse(response) {
+            switch(response) {
+                case "success":
+                    $("#registerForm")[0].reset();
+                    $("#successMsg").show();
+                    break;
+                case "exists":
+                    showError("用户名已被注册");
+                    break;
+                case "invalid_email":
+                    showError("邮箱格式不正确");
+                    break;
+                case "system_error":
+                    showError("系统错误，请稍后再试");
+                    break;
+                default:
+                    showError("未知错误");
+            }
+        }
+
+        function showError(message) {
+            $("#errorMsg").text(message).show();
+        }
+    });
+</script>
+</body>
+</html>
