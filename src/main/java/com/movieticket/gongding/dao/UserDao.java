@@ -103,11 +103,17 @@ public class UserDao {
         }
     }
 
-    public boolean updateUserMoney(int userId, BigDecimal money, BigDecimal totalPrice) throws SQLException {
+    public boolean updateUserMoney(int userId, BigDecimal totalPrice, String action) throws SQLException {
         try (Connection conn = JDBCUtils.getConnection()) {
-            String sql = "UPDATE users SET money = ? WHERE id = ?";
+            String sql =null;
+            if (action.equals("SUB")) {
+                sql = "UPDATE users SET money = money - ? WHERE id = ?";
+            } else {
+                sql = "UPDATE users SET money = money + ? WHERE id = ?";
+            }
+
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setBigDecimal(1, money.subtract(totalPrice));
+                pstmt.setBigDecimal(1, totalPrice);
                 pstmt.setInt(2, userId);
                 return pstmt.executeUpdate() > 0;
             }

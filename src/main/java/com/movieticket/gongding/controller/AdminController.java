@@ -138,6 +138,10 @@ public class AdminController {
                     System.out.println("订单状态更新失败");
                     return;
                 }
+                if (!userDao.updateUserMoney(request.getUserId(),request.getMoney(),"ADD")) {
+                    System.out.println("退款失败");
+                    return;
+                }
 
                 // 释放座位
                 String refundSeats = order.getSeats();
@@ -154,6 +158,8 @@ public class AdminController {
             return;
         } catch (NumberFormatException e) {
             System.out.println("输入格式错误，请输入数字ID！");
+        } catch (SQLException e) {
+            System.out.println("系统异常！");
         }
     }
 

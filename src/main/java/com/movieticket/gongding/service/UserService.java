@@ -123,7 +123,7 @@ public class UserService {
                     System.out.println("余额不足！");
                     return;
                 } else {
-                    userDao.updateUserMoney(userId,user.getMoney(),totalPrice);
+                    userDao.updateUserMoney(userId,totalPrice,"SUB");
                 }
 
                 // 显示可用座位
@@ -253,6 +253,10 @@ public class UserService {
             RefundRequest request = new RefundRequest();
             request.setOrderId(orderId);
             request.setReason(reason);
+            request.setUserId(userId);
+
+            BigDecimal totalPrice=movie.getPrice().multiply(new BigDecimal(order.getSeatCount()));
+            request.setMoney(totalPrice);
 
             if (!refundRequestDao.createRequest(request)) {
                 System.out.println("退票申请提交失败");

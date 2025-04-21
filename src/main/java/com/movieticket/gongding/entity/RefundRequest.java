@@ -1,15 +1,18 @@
 package com.movieticket.gongding.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class RefundRequest {
     private Integer id;
     private Integer orderId;
+    private Integer userId;
     private String reason;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime processedAt;
     private String adminComment;
+    private BigDecimal money;
 
     public Integer getId() {
         return id;
@@ -65,5 +68,21 @@ public class RefundRequest {
 
     public void setAdminComment(String adminComment) {
         this.adminComment = adminComment;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+
+    public BigDecimal getMoney() {
+        return money;
+    }
+
+    public void setMoney(BigDecimal money) {
+        this.money = money;
     }
 }

@@ -38,10 +38,12 @@ public class RefundRequestDao {
     }
 
     public boolean createRequest(RefundRequest request) {
-        String sql = "INSERT INTO refund_requests (order_id, reason) VALUES (?, ?)";
+        String sql = "INSERT INTO refund_requests (order_id, reason, user_id, money) VALUES (?, ? ,? ,?)";
         try (Connection conn = JDBCUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, request.getOrderId());
             pstmt.setString(2, request.getReason());
+            pstmt.setInt(3, request.getUserId());
+            pstmt.setBigDecimal(4, request.getMoney());
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             return false;
@@ -86,6 +88,8 @@ public class RefundRequestDao {
                         request.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
                         request.setProcessedAt(rs.getTimestamp("processed_at") != null ? rs.getTimestamp("processed_at").toLocalDateTime() : null);
                         request.setAdminComment(rs.getString("admin_comment"));
+                        request.setMoney(rs.getBigDecimal("money"));
+                        request.setUserId(rs.getInt("user_id"));
                         return request;
                     }
                 }
